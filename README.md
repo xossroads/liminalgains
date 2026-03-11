@@ -69,6 +69,22 @@ server {
 }
 ```
 
+## Authentication
+
+Invite-only. No public registration. Create users via the backend container:
+
+```bash
+docker-compose exec backend node src/create-user.js <username> <password>
+```
+
+JWT sessions last 30 days. All API routes (except health and login) require authentication.
+
+Set a secure JWT secret in production:
+
+```bash
+JWT_SECRET=your-secret-here docker-compose up -d --build
+```
+
 ## Offline Behavior
 
 The app works fully offline using IndexedDB as a local cache:

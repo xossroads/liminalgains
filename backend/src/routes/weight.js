@@ -6,8 +6,8 @@ router.get('/weight/:date', async (req, res) => {
   try {
     const { date } = req.params;
     const result = await pool.query(
-      'SELECT * FROM daily_weight WHERE date = $1',
-      [date]
+      'SELECT * FROM daily_weight WHERE user_id = $1 AND date = $2',
+      [req.userId, date]
     );
     if (result.rows.length === 0) {
       return res.json(null);
@@ -27,11 +27,11 @@ router.put('/weight/:date', async (req, res) => {
       return res.status(400).json({ error: 'weight_value is required' });
     }
     const result = await pool.query(
-      `INSERT INTO daily_weight (date, weight_value, unit)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (date) DO UPDATE SET weight_value = $2, unit = $3
+      `INSERT INTO daily_weight (user_id, date, weight_value, unit)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, date) DO UPDATE SET weight_value = $3, unit = $4
        RETURNING *`,
-      [date, weight_value, unit || 'lbs']
+      [req.userId, date, weight_value, unit || 'lbs']
     );
     res.json(result.rows[0]);
   } catch (err) {

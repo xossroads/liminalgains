@@ -1,4 +1,6 @@
-export default function Settings({ weightUnit, onWeightUnitChange }) {
+import { LogOut } from 'lucide-react';
+
+export default function Settings({ weightUnit, onWeightUnitChange, username, onLogout }) {
   return (
     <div className="pb-24 md:pb-8">
       <div className="px-4 py-4">
@@ -6,6 +8,26 @@ export default function Settings({ weightUnit, onWeightUnitChange }) {
       </div>
 
       <div className="px-4 space-y-4">
+        {/* Account */}
+        <div className="bg-surface-700 rounded-lg p-4 border border-surface-500">
+          <div className="text-xs text-muted uppercase tracking-wider font-display mb-3">
+            Account
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-mono text-white">{username}</div>
+              <div className="text-xs font-body text-muted mt-0.5">Signed in</div>
+            </div>
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-600 text-muted hover:text-white transition-colors min-h-[44px] text-sm font-display"
+            >
+              <LogOut size={16} />
+              Sign Out
+            </button>
+          </div>
+        </div>
+
         {/* Weight unit toggle */}
         <div className="bg-surface-700 rounded-lg p-4 border border-surface-500">
           <div className="text-xs text-muted uppercase tracking-wider font-display mb-3">
@@ -42,7 +64,7 @@ export default function Settings({ weightUnit, onWeightUnitChange }) {
               The threshold state of fitness progress — the in-between space where daily
               effort accumulates before results become visible.
             </p>
-            <div className="font-mono text-xs text-muted/50 mt-4">v1.0.0</div>
+            <div className="font-mono text-xs text-muted/50 mt-4">v2.0.0</div>
           </div>
         </div>
       </div>
