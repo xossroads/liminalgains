@@ -9,6 +9,7 @@ export function useWeight(date, unit) {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setWeight(null);
     const local = await idb.getWeight(date);
     if (local) setWeight(local.weight_value);
     setLoading(false);

@@ -106,10 +106,11 @@ export async function replaceEntriesForDate(date, serverEntries) {
 
   // Add server entries
   for (const se of serverEntries) {
+    const normalizedDate = typeof se.date === 'string' ? se.date.split('T')[0] : date;
     await store.put({
       clientId: se.clientId || `server-${se.id}`,
       serverId: se.id,
-      date: se.date,
+      date: normalizedDate,
       food_name: se.food_name,
       calories: se.calories,
       protein: se.protein,
