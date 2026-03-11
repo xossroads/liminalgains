@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: liminalgains
+      POSTGRES_USER: liminalgains
+      POSTGRES_PASSWORD: liminalgains
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U liminalgains"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgres://liminalgains:liminalgains@db:5432/liminalgains
+      PORT: 3001
+      DOMAIN: ${DOMAIN:-liminalgains.fit}
+    expose:
+      - "3001"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "41972:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
