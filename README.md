@@ -23,50 +23,10 @@ Open [http://localhost:41972](http://localhost:41972) in your browser.
 
 ## Production Deployment
 
-### 1. DNS Setup
-
-Point `liminalgains.fit` A record to your server's IP address.
-
-### 2. Reverse Proxy with Caddy (HTTPS)
-
-Install [Caddy](https://caddyserver.com/) on your server. Create a `Caddyfile`:
-
-```
-liminalgains.fit {
-    reverse_proxy localhost:41972
-}
-```
-
-Run Caddy — it handles SSL/TLS certificates automatically:
+Point a Cloudflare Tunnel to `http://localhost:41972`. HTTPS is handled by Cloudflare.
 
 ```bash
-caddy run
-```
-
-Then start the app:
-
-```bash
-DOMAIN=liminalgains.fit docker-compose up -d --build
-```
-
-### Alternative: nginx reverse proxy
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name liminalgains.fit;
-
-    ssl_certificate /etc/letsencrypt/live/liminalgains.fit/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/liminalgains.fit/privkey.pem;
-
-    location / {
-        proxy_pass http://localhost:41972;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
+JWT_SECRET=your-secret-here docker-compose up -d --build
 ```
 
 ## Authentication
@@ -77,7 +37,7 @@ Invite-only. No public registration. Create users via the backend container:
 docker-compose exec backend node src/create-user.js <username> <password>
 ```
 
-JWT sessions last 30 days. All API routes (except health and login) require authentication.
+JWT sessions last 90 days. All API routes (except health and login) require authentication.
 
 Set a secure JWT secret in production:
 
