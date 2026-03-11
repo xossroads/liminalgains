@@ -31,8 +31,8 @@ export default function WeightInput({ weight, unit, onSave }) {
             onChange={(e) => { setValue(e.target.value); setEditing(true); }}
             onBlur={handleBlur}
             onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
-            placeholder="--"
-            className="bg-transparent text-4xl font-mono text-accent w-32 outline-none placeholder:text-surface-500"
+            placeholder="Tap to log"
+            className="bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 text-4xl font-mono text-accent w-40 outline-none focus:border-accent/50 placeholder:text-muted/40 placeholder:text-lg"
           />
           <span className="text-lg font-mono text-muted">{unit}</span>
         </div>

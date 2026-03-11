@@ -8,7 +8,7 @@ const cards = [
 
 export default function SummaryCards({ totals, weight, weightUnit }) {
   return (
-    <div className="flex gap-3 overflow-x-auto snap-x px-4 pb-2 scrollbar-hide">
+    <div className="flex gap-3 overflow-x-auto snap-x pl-4 pb-2 scrollbar-hide">
       {cards.map(({ key, label, unit }) => (
         <div
           key={key}
@@ -28,6 +28,7 @@ export default function SummaryCards({ totals, weight, weightUnit }) {
         </div>
         <div className="text-xs font-mono text-muted">{weightUnit}</div>
       </div>
+      <div className="shrink-0 w-4" />
     </div>
   );
 }
