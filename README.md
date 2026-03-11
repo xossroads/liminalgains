@@ -8,24 +8,27 @@ A mobile-first daily nutrition and weight tracking app. No gamification, no cele
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 
-## Local Development
+## Environment Setup
+
+Create a `.env` file in the project root:
+
+```
+JWT_SECRET=your-secret-here
+```
+
+Generate a secret with `openssl rand -hex 32`. This value must stay consistent across restarts or all sessions will be invalidated.
+
+## Running
 
 ```bash
 docker-compose up --build
 ```
 
-Open [http://localhost:41972](http://localhost:41972) in your browser.
+Open [http://localhost:41972](http://localhost:41972).
 
-- Frontend: port 41972 (nginx, only exposed port)
-- Backend and PostgreSQL are internal to the Docker network only
-
-## Production
-
-```bash
-JWT_SECRET=your-secret-here docker-compose up -d --build
-```
-
-Frontend is exposed on port 41972. Backend and PostgreSQL are internal only.
+- Frontend: port 41972 (only exposed port)
+- Backend and PostgreSQL are internal to the Docker network
+- Data is persisted in `./data/postgres/`
 
 ## Authentication
 
