@@ -1,28 +1,53 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import BottomNav from './components/BottomNav';
 import SyncStatusIndicator from './components/SyncStatusIndicator';
 import Today from './pages/Today';
 import History from './pages/History';
 import Settings from './pages/Settings';
+import Login from './pages/Login';
 import { startSync, stopSync } from './sync/syncManager';
 import { getSetting, putSetting } from './db/idb';
+import { getAuth, logout } from './api/client';
 
 export default function App() {
   const [tab, setTab] = useState('today');
   const [weightUnit, setWeightUnit] = useState('lbs');
+  const [auth, setAuth] = useState(getAuth);
 
   useEffect(() => {
+    const handleExpired = () => setAuth(null);
+    window.addEventListener('auth-expired', handleExpired);
+    return () => window.removeEventListener('auth-expired', handleExpired);
+  }, []);
+
+  useEffect(() => {
+    if (!auth) return;
     startSync();
     getSetting('weightUnit').then(unit => {
       if (unit) setWeightUnit(unit);
     });
     return () => stopSync();
+  }, [auth]);
+
+  const handleLogin = useCallback((data) => {
+    setAuth({ token: data.token, userId: data.userId, username: data.username });
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    logout();
+    stopSync();
+    setAuth(null);
+    setTab('today');
   }, []);
 
   const handleWeightUnitChange = (unit) => {
     setWeightUnit(unit);
     putSetting('weightUnit', unit);
   };
+
+  if (!auth) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-surface-900">
@@ -49,6 +74,8 @@ export default function App() {
           <Settings
             weightUnit={weightUnit}
             onWeightUnitChange={handleWeightUnitChange}
+            username={auth.username}
+            onLogout={handleLogout}
           />
         )}
       </main>

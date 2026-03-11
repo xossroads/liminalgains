@@ -6,8 +6,8 @@ router.get('/entries/:date', async (req, res) => {
   try {
     const { date } = req.params;
     const result = await pool.query(
-      'SELECT * FROM food_entries WHERE date = $1 ORDER BY created_at ASC',
-      [date]
+      'SELECT * FROM food_entries WHERE user_id = $1 AND date = $2 ORDER BY created_at ASC',
+      [req.userId, date]
     );
     res.json(result.rows);
   } catch (err) {
@@ -27,10 +27,10 @@ router.post('/entries', async (req, res) => {
       return res.status(400).json({ error: 'At least one nutrition field is required' });
     }
     const result = await pool.query(
-      `INSERT INTO food_entries (date, food_name, calories, protein, carbs, fiber, fat)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO food_entries (user_id, date, food_name, calories, protein, carbs, fiber, fat)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [date, food_name, calories || null, protein || null, carbs || null, fiber || null, fat || null]
+      [req.userId, date, food_name, calories || null, protein || null, carbs || null, fiber || null, fat || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -43,8 +43,8 @@ router.delete('/entries/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'DELETE FROM food_entries WHERE id = $1 RETURNING *',
-      [id]
+      'DELETE FROM food_entries WHERE id = $1 AND user_id = $2 RETURNING *',
+      [id, req.userId]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Entry not found' });
