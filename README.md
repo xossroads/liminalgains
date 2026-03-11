@@ -52,7 +52,8 @@ The app works fully offline using IndexedDB as a local cache:
 To wipe all data and start fresh:
 
 ```bash
-docker-compose down -v
+docker-compose down
+rm -rf ./data/postgres
 docker-compose up --build
 ```
 
