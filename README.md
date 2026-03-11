@@ -4,8 +4,6 @@
 
 A mobile-first daily nutrition and weight tracking app. No gamification, no celebration confetti. Just clean data and the quiet satisfaction of showing up.
 
-**Domain:** liminalgains.fit
-
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
@@ -21,13 +19,13 @@ Open [http://localhost:41972](http://localhost:41972) in your browser.
 - Frontend: port 41972 (nginx, only exposed port)
 - Backend and PostgreSQL are internal to the Docker network only
 
-## Production Deployment
-
-Point a Cloudflare Tunnel to `http://localhost:41972`. HTTPS is handled by Cloudflare.
+## Production
 
 ```bash
 JWT_SECRET=your-secret-here docker-compose up -d --build
 ```
+
+Frontend is exposed on port 41972. Backend and PostgreSQL are internal only.
 
 ## Authentication
 
@@ -38,12 +36,6 @@ docker-compose exec backend node src/create-user.js <username> <password>
 ```
 
 JWT sessions last 90 days. All API routes (except health and login) require authentication.
-
-Set a secure JWT secret in production:
-
-```bash
-JWT_SECRET=your-secret-here docker-compose up -d --build
-```
 
 ## Offline Behavior
 
