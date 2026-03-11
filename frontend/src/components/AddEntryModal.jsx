@@ -74,7 +74,7 @@ export default function AddEntryModal({ open, onClose, onAdd }) {
                 type="text"
                 value={form.food_name}
                 onChange={(e) => setField('food_name', e.target.value)}
-                className="w-full bg-surface-700 border border-surface-500 rounded-lg px-3 py-3 text-white font-body text-sm outline-none focus:border-accent/50 min-h-[44px]"
+                className="w-full bg-surface-700 border border-surface-500 rounded-lg px-3 py-3 text-white font-body outline-none focus:border-accent/50 min-h-[44px]"
                 placeholder="e.g. Chicken breast"
               />
             </div>
@@ -90,7 +90,7 @@ export default function AddEntryModal({ open, onClose, onAdd }) {
                     inputMode="decimal"
                     value={form[key]}
                     onChange={(e) => setField(key, e.target.value)}
-                    className="w-full bg-surface-700 border border-surface-500 rounded-lg px-3 py-3 font-mono text-sm text-white outline-none focus:border-accent/50 min-h-[44px]"
+                    className="w-full bg-surface-700 border border-surface-500 rounded-lg px-3 py-3 font-mono text-white outline-none focus:border-accent/50 min-h-[44px]"
                     placeholder="0"
                   />
                 </div>
