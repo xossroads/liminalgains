@@ -1,6 +1,7 @@
-const express = require('express');
-const router = express.Router();
-const pool = require('../db');
+import { Router } from 'express';
+import pool from '../db.js';
+
+const router = Router();
 
 router.get('/entries/:date', async (req, res) => {
   try {
@@ -56,4 +57,4 @@ router.delete('/entries/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,11 +1,11 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const healthRoutes = require('./routes/health');
-const authRoutes = require('./routes/auth');
-const entriesRoutes = require('./routes/entries');
-const weightRoutes = require('./routes/weight');
-const { authenticate } = require('./middleware/auth');
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import healthRoutes from './routes/health.js';
+import authRoutes from './routes/auth.js';
+import entriesRoutes from './routes/entries.js';
+import weightRoutes from './routes/weight.js';
+import { authenticate } from './middleware/auth.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
