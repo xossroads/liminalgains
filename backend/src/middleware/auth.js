@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -6,7 +6,7 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-function authenticate(req, res, next) {
+export function authenticate(req, res, next) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Authentication required' });
@@ -23,4 +23,4 @@ function authenticate(req, res, next) {
   }
 }
 
-module.exports = { authenticate, JWT_SECRET };
+export { JWT_SECRET };

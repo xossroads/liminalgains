@@ -1,15 +1,15 @@
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const rateLimit = require('express-rate-limit');
-const pool = require('../db');
-const { JWT_SECRET } = require('../middleware/auth');
+import { Router } from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
+import pool from '../db.js';
+import { JWT_SECRET } from '../middleware/auth.js';
 
-const router = express.Router();
+const router = Router();
 
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per window
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   message: { error: 'Too many login attempts. Try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -50,4 +50,4 @@ router.post('/auth/login', loginLimiter, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
