@@ -48,6 +48,24 @@ export function useNutritionLog(date) {
     sync();
   }, [date]);
 
+  const editEntry = useCallback(async (clientId, data) => {
+    const existing = await idb.getEntryByClientId(clientId);
+    if (!existing) return;
+    const updated = {
+      ...existing,
+      food_name: data.food_name,
+      calories: data.calories || null,
+      protein: data.protein || null,
+      carbs: data.carbs || null,
+      fiber: data.fiber || null,
+      fat: data.fat || null,
+      syncStatus: existing.syncStatus === 'pending_create' ? 'pending_create' : 'pending_update',
+    };
+    await idb.putEntry(updated);
+    setEntries(prev => prev.map(e => e.clientId === clientId ? updated : e));
+    sync();
+  }, []);
+
   const removeEntry = useCallback(async (clientId) => {
     await idb.deleteEntry(clientId);
     setEntries(prev => prev.filter(e => e.clientId !== clientId));
@@ -65,5 +83,5 @@ export function useNutritionLog(date) {
     { calories: 0, protein: 0, carbs: 0, fiber: 0, fat: 0 }
   );
 
-  return { entries, totals, loading, addEntry, removeEntry, reload: load };
+  return { entries, totals, loading, addEntry, editEntry, removeEntry, reload: load };
 }

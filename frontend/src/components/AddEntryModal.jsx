@@ -1,18 +1,28 @@
 import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 
-export default function AddEntryModal({ open, onClose, onAdd }) {
+export default function AddEntryModal({ open, onClose, onAdd, onEdit, editingEntry }) {
   const [form, setForm] = useState({ food_name: '', calories: '', protein: '', carbs: '', fiber: '', fat: '' });
   const nameRef = useRef(null);
+  const isEditing = !!editingEntry;
 
   useEffect(() => {
     if (open && nameRef.current) {
       setTimeout(() => nameRef.current.focus(), 100);
     }
-    if (open) {
+    if (open && editingEntry) {
+      setForm({
+        food_name: editingEntry.food_name || '',
+        calories: editingEntry.calories != null ? String(editingEntry.calories) : '',
+        protein: editingEntry.protein != null ? String(editingEntry.protein) : '',
+        carbs: editingEntry.carbs != null ? String(editingEntry.carbs) : '',
+        fiber: editingEntry.fiber != null ? String(editingEntry.fiber) : '',
+        fat: editingEntry.fat != null ? String(editingEntry.fat) : '',
+      });
+    } else if (open) {
       setForm({ food_name: '', calories: '', protein: '', carbs: '', fiber: '', fat: '' });
     }
-  }, [open]);
+  }, [open, editingEntry]);
 
   if (!open) return null;
 
@@ -21,14 +31,19 @@ export default function AddEntryModal({ open, onClose, onAdd }) {
     if (!form.food_name.trim()) return;
     const hasNutrition = ['calories', 'protein', 'carbs', 'fiber', 'fat'].some(k => form[k] !== '');
     if (!hasNutrition) return;
-    onAdd({
+    const data = {
       food_name: form.food_name.trim(),
       calories: form.calories ? Number(form.calories) : null,
       protein: form.protein ? Number(form.protein) : null,
       carbs: form.carbs ? Number(form.carbs) : null,
       fiber: form.fiber ? Number(form.fiber) : null,
       fat: form.fat ? Number(form.fat) : null,
-    });
+    };
+    if (isEditing) {
+      onEdit(editingEntry.clientId, data);
+    } else {
+      onAdd(data);
+    }
     onClose();
   };
 
@@ -44,17 +59,17 @@ export default function AddEntryModal({ open, onClose, onAdd }) {
 
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
 
-      {/* Bottom sheet on mobile, centered dialog on desktop */}
       <div className="fixed inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center z-50">
         <form
           onSubmit={handleSubmit}
           className="bg-surface-800 border-t border-surface-500 md:border md:rounded-xl md:max-w-md md:w-full rounded-t-2xl p-5 pb-8 md:pb-5 max-h-[85vh] overflow-y-auto"
         >
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-base font-display font-medium text-white">Add Food</h2>
+            <h2 className="text-base font-display font-medium text-white">
+              {isEditing ? 'Edit Food' : 'Add Food'}
+            </h2>
             <button
               type="button"
               onClick={onClose}
@@ -102,7 +117,7 @@ export default function AddEntryModal({ open, onClose, onAdd }) {
             type="submit"
             className="mt-6 w-full bg-accent text-surface-900 font-display font-medium py-3.5 rounded-lg active:bg-accent-dim transition-colors min-h-[48px] text-sm"
           >
-            Add Entry
+            {isEditing ? 'Save Changes' : 'Add Entry'}
           </button>
         </form>
       </div>

@@ -10,6 +10,11 @@ export async function createEntry(entry) {
   return res.data;
 }
 
+export async function updateEntryAPI(id, entry) {
+  const res = await client.put(`/entries/${id}`, entry);
+  return res.data;
+}
+
 export async function deleteEntryAPI(id) {
   const res = await client.delete(`/entries/${id}`);
   return res.data;

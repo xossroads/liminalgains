@@ -40,6 +40,30 @@ router.post('/entries', async (req, res) => {
   }
 });
 
+router.put('/entries/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { food_name, calories, protein, carbs, fiber, fat } = req.body;
+    if (!food_name) {
+      return res.status(400).json({ error: 'food_name is required' });
+    }
+    const result = await pool.query(
+      `UPDATE food_entries
+       SET food_name = $1, calories = $2, protein = $3, carbs = $4, fiber = $5, fat = $6
+       WHERE id = $7 AND user_id = $8
+       RETURNING *`,
+      [food_name, calories || null, protein || null, carbs || null, fiber || null, fat || null, id, req.userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Entry not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('PUT /entries/:id error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.delete('/entries/:id', async (req, res) => {
   try {
     const { id } = req.params;
