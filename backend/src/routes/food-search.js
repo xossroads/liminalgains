@@ -4,7 +4,7 @@ import axios from 'axios';
 const router = Router();
 
 const off = axios.create({
-  baseURL: 'https://world.openfoodfacts.net',
+  baseURL: 'https://us.openfoodfacts.net',
   timeout: 10000,
   headers: {
     'User-Agent': 'LiminalGains/1.0 (liminalgains.fit)',
@@ -23,7 +23,7 @@ router.get('/food-search', async (req, res) => {
         search_terms: q.trim(),
         json: true,
         page_size,
-        countries_tags_en: 'united-states',
+        sort_by: 'unique_scans_n',
         fields: 'product_name,brands,serving_quantity,serving_size,nutriments',
       },
     });
