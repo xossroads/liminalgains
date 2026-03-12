@@ -4,8 +4,8 @@ import axios from 'axios';
 const router = Router();
 
 const off = axios.create({
-  baseURL: 'https://world.openfoodfacts.org',
-  timeout: 15000,
+  baseURL: 'https://world.openfoodfacts.net',
+  timeout: 10000,
   headers: {
     'User-Agent': 'LiminalGains/1.0 (liminalgains.fit)',
   },
