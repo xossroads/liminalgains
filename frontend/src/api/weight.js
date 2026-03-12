@@ -9,3 +9,8 @@ export async function updateWeight(date, weight_value, unit) {
   const res = await client.put(`/weight/${date}`, { weight_value, unit });
   return res.data;
 }
+
+export async function deleteWeight(date) {
+  const res = await client.delete(`/weight/${date}`);
+  return res.data;
+}

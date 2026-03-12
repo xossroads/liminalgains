@@ -17,7 +17,11 @@ export default function WeightInput({ weight, unit, onSave }) {
   };
 
   const handleSave = () => {
-    if (value && !isNaN(Number(value))) {
+    if (value === '') {
+      // Clear weight
+      onSave('');
+      setDirty(false);
+    } else if (!isNaN(Number(value))) {
       onSave(value);
       setDirty(false);
     }
@@ -41,7 +45,7 @@ export default function WeightInput({ weight, unit, onSave }) {
             className="bg-surface-600 border border-surface-500 rounded-lg px-3 py-2 text-4xl font-mono text-accent w-40 outline-none focus:border-accent/50 placeholder:text-muted/40 placeholder:text-lg"
           />
           <span className="text-lg font-mono text-muted">{unit}</span>
-          {dirty && value && (
+          {dirty && (
             <button
               onClick={handleSave}
               className="ml-auto bg-accent text-surface-900 rounded-lg p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center active:bg-accent-dim transition-colors"

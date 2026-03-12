@@ -35,7 +35,18 @@ export function useWeight(date, unit) {
   }, [load]);
 
   const saveWeight = useCallback(async (value) => {
-    if (value === '' || value == null) return;
+    if (value === '' || value == null) {
+      // Clear weight
+      setWeight(null);
+      await idb.putWeight({
+        date,
+        weight_value: null,
+        unit,
+        syncStatus: 'pending_delete',
+      });
+      sync();
+      return;
+    }
     const numVal = Number(value);
     if (isNaN(numVal)) return;
     setWeight(numVal);

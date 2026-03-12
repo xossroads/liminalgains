@@ -27,13 +27,13 @@ function CustomTooltip({ active, payload, label, weightUnit }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-surface-900 border border-surface-500 rounded px-3 py-2 shadow-lg">
-      <div className="text-[10px] font-mono text-muted mb-1">{formatShortDate(label)}</div>
+      <div className="text-xs font-mono text-muted mb-1">{formatShortDate(label)}</div>
       {payload.map(p => {
         const m = metrics.find(m => m.key === p.dataKey);
         const unit = m?.key === 'weight' ? weightUnit : m?.unit;
         return (
-          <div key={p.dataKey} className="text-xs font-mono flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }} />
+          <div key={p.dataKey} className="text-sm font-mono flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
             <span style={{ color: p.color }}>{m?.label}</span>
             <span className="text-white">{Math.round(p.value)}{unit ? ` ${unit}` : ''}</span>
           </div>
@@ -136,20 +136,20 @@ export default function HistoryChart({ days, weightUnit }) {
         </div>
 
         {/* Recharts Line Chart */}
-        <ResponsiveContainer width="100%" height={180}>
-          <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
+        <ResponsiveContainer width="100%" height={200}>
+          <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid stroke="#333333" strokeWidth={0.5} vertical={false} />
             <XAxis
               dataKey="date"
               tickFormatter={formatShortDate}
-              tick={{ fill: '#6b6b6b', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}
+              tick={{ fill: '#6b6b6b', fontSize: 12, fontFamily: 'JetBrains Mono, monospace' }}
               axisLine={{ stroke: '#333333' }}
               tickLine={false}
               interval="preserveStartEnd"
             />
             <YAxis
               yAxisId="left"
-              tick={{ fill: '#6b6b6b', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}
+              tick={{ fill: '#6b6b6b', fontSize: 12, fontFamily: 'JetBrains Mono, monospace' }}
               axisLine={false}
               tickLine={false}
               domain={['auto', 'auto']}
@@ -159,7 +159,7 @@ export default function HistoryChart({ days, weightUnit }) {
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                tick={{ fill: '#6b6b6b', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}
+                tick={{ fill: '#6b6b6b', fontSize: 12, fontFamily: 'JetBrains Mono, monospace' }}
                 axisLine={false}
                 tickLine={false}
                 domain={['auto', 'auto']}
@@ -189,7 +189,7 @@ export default function HistoryChart({ days, weightUnit }) {
             {activeMetrics.map(m => (
               <div key={m.key} className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
-                <span className="text-[10px] font-mono text-muted">{m.label}</span>
+                <span className="text-xs font-mono text-muted">{m.label}</span>
               </div>
             ))}
           </div>

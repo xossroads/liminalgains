@@ -41,4 +41,18 @@ router.put('/weight/:date', async (req, res) => {
   }
 });
 
+router.delete('/weight/:date', async (req, res) => {
+  try {
+    const { date } = req.params;
+    await pool.query(
+      'DELETE FROM daily_weight WHERE user_id = $1 AND date = $2',
+      [req.userId, date]
+    );
+    res.json({ deleted: true });
+  } catch (err) {
+    console.error('DELETE /weight/:date error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
