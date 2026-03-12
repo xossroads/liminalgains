@@ -227,7 +227,7 @@ export default function AddEntryModal({ open, onClose, onAdd, onEdit, editingEnt
                       <div className="text-[11px] font-mono text-muted mt-0.5">
                         {food.calories != null ? `${Math.round(food.calories)} cal` : ''}
                         {food.protein != null ? ` · ${Math.round(food.protein)}g pro` : ''}
-                        <span className="text-muted/50"> / serving</span>
+                        {food.servingSize && <span className="text-muted/50"> / {food.servingSize}</span>}
                       </div>
                     </button>
                   ))}

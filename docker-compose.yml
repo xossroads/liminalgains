@@ -22,6 +22,7 @@ services:
       DATABASE_URL: postgres://liminalgains:liminalgains@db:5432/liminalgains
       PORT: 3001
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your environment}
+      USDA_API_KEY: ${USDA_API_KEY:-}
       DOMAIN: ${DOMAIN:-liminalgains.fit}
     expose:
       - "3001"

@@ -1,53 +1,71 @@
 import { Router } from 'express';
-import axios from 'axios';
 
 const router = Router();
 
-const off = axios.create({
-  baseURL: 'https://us.openfoodfacts.net',
-  timeout: 10000,
-  headers: {
-    'User-Agent': 'LiminalGains/1.0 (liminalgains.fit)',
-  },
-});
+const USDA_BASE = 'https://api.nal.usda.gov/fdc/v1';
+const USDA_KEY = process.env.USDA_API_KEY || '';
+
+// Nutrient IDs we care about
+const NUTRIENT_IDS = {
+  1008: 'calories',  // Energy (kcal)
+  1003: 'protein',
+  1005: 'carbs',
+  1079: 'fiber',
+  1004: 'fat',
+};
 
 router.get('/food-search', async (req, res) => {
   try {
-    const { q, page_size = 10 } = req.query;
+    const { q, page_size = 8 } = req.query;
     if (!q || q.trim().length < 2) {
       return res.json([]);
     }
 
-    const result = await off.get('/cgi/search.pl', {
-      params: {
-        search_terms: q.trim(),
-        json: true,
-        page_size,
-        sort_by: 'unique_scans_n',
-        fields: 'product_name,brands,serving_quantity,serving_size,nutriments',
-      },
+    const response = await fetch(`${USDA_BASE}/foods/search?api_key=${USDA_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: q.trim(),
+        pageSize: Number(page_size),
+        dataType: ['Survey (FNDDS)', 'SR Legacy'],
+      }),
     });
 
-    const products = result.data?.products || [];
+    if (!response.ok) {
+      console.error('USDA API error:', response.status);
+      return res.status(502).json({ error: 'Food search failed' });
+    }
 
-    const foods = products
-      .filter(p => p.product_name)
-      .map(p => {
-        const n = p.nutriments || {};
-        const hasSrv = n['energy-kcal_serving'] != null || n['proteins_serving'] != null;
-        const suffix = hasSrv ? '_serving' : '_100g';
+    const data = await response.json();
+    const foods = (data.foods || []).map(f => {
+      // Extract nutrients (values are per 100g)
+      const per100g = {};
+      for (const n of f.foodNutrients || []) {
+        const key = NUTRIENT_IDS[n.nutrientId];
+        if (key) per100g[key] = n.value ?? null;
+      }
 
-        return {
-          name: p.product_name,
-          brand: p.brands || null,
-          servingSize: p.serving_size || (hasSrv ? null : '100g'),
-          calories: n[`energy-kcal${suffix}`] ?? null,
-          protein: n[`proteins${suffix}`] ?? null,
-          carbs: n[`carbohydrates${suffix}`] ?? null,
-          fiber: n[`fiber${suffix}`] ?? null,
-          fat: n[`fat${suffix}`] ?? null,
-        };
-      });
+      // Find the best serving measure (prefer rank 1, skip "Quantity not specified")
+      const measures = (f.foodMeasures || [])
+        .filter(m => m.disseminationText && m.disseminationText !== 'Quantity not specified')
+        .sort((a, b) => (a.rank || 99) - (b.rank || 99));
+
+      const measure = measures[0] || null;
+      const gramWeight = measure?.gramWeight || 100;
+      const scale = gramWeight / 100;
+
+      return {
+        name: f.description,
+        brand: null,
+        servingSize: measure?.disseminationText || '100g',
+        servingGrams: gramWeight,
+        calories: per100g.calories != null ? Math.round(per100g.calories * scale) : null,
+        protein: per100g.protein != null ? Math.round(per100g.protein * scale * 10) / 10 : null,
+        carbs: per100g.carbs != null ? Math.round(per100g.carbs * scale * 10) / 10 : null,
+        fiber: per100g.fiber != null ? Math.round(per100g.fiber * scale * 10) / 10 : null,
+        fat: per100g.fat != null ? Math.round(per100g.fat * scale * 10) / 10 : null,
+      };
+    });
 
     res.json(foods);
   } catch (err) {
