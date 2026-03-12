@@ -5,7 +5,7 @@ const router = Router();
 
 const off = axios.create({
   baseURL: 'https://world.openfoodfacts.org',
-  timeout: 8000,
+  timeout: 15000,
   headers: {
     'User-Agent': 'LiminalGains/1.0 (liminalgains.fit)',
   },
