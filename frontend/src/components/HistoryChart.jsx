@@ -1,4 +1,13 @@
 import { useState, useMemo } from 'react';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
 
 const metrics = [
   { key: 'weight', label: 'Weight', color: '#c9a96e', unit: '' },
@@ -9,9 +18,29 @@ const metrics = [
   { key: 'fat', label: 'Fat', color: '#d19a66', unit: 'g' },
 ];
 
-function getValue(day, key) {
-  if (key === 'weight') return day.weight;
-  return day.totals[key] ?? null;
+function formatShortDate(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function CustomTooltip({ active, payload, label, weightUnit }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-surface-900 border border-surface-500 rounded px-3 py-2 shadow-lg">
+      <div className="text-[10px] font-mono text-muted mb-1">{formatShortDate(label)}</div>
+      {payload.map(p => {
+        const m = metrics.find(m => m.key === p.dataKey);
+        const unit = m?.key === 'weight' ? weightUnit : m?.unit;
+        return (
+          <div key={p.dataKey} className="text-xs font-mono flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }} />
+            <span style={{ color: p.color }}>{m?.label}</span>
+            <span className="text-white">{Math.round(p.value)}{unit ? ` ${unit}` : ''}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function HistoryChart({ days, weightUnit }) {
@@ -31,6 +60,52 @@ export default function HistoryChart({ days, weightUnit }) {
     });
   };
 
+  const chartData = useMemo(() => {
+    return sorted.map(day => {
+      const point = { date: day.date };
+      for (const m of metrics) {
+        if (m.key === 'weight') {
+          point[m.key] = day.weight ?? undefined;
+        } else {
+          const val = day.totals[m.key];
+          point[m.key] = val != null ? Number(val) : undefined;
+        }
+      }
+      return point;
+    });
+  }, [sorted]);
+
+  const activeMetrics = metrics.filter(m => active.has(m.key));
+
+  // Determine which metrics need the left vs right Y-axis
+  // First active metric gets left axis, second gets right (if ranges differ significantly)
+  const yAxes = useMemo(() => {
+    if (activeMetrics.length <= 1) return { left: activeMetrics[0]?.key, right: null };
+
+    // Group metrics by similar range to decide axis assignment
+    const ranges = {};
+    for (const m of activeMetrics) {
+      const values = chartData.map(d => d[m.key]).filter(v => v != null);
+      if (values.length === 0) continue;
+      ranges[m.key] = { min: Math.min(...values), max: Math.max(...values) };
+    }
+
+    const keys = Object.keys(ranges);
+    if (keys.length < 2) return { left: keys[0], right: null };
+
+    // If max values differ by more than 3x, use dual axes
+    const maxVals = keys.map(k => ranges[k].max);
+    const ratio = Math.max(...maxVals) / Math.min(...maxVals);
+    if (ratio > 3) {
+      // Put the smallest-range metric on the right
+      const sortedByMax = [...keys].sort((a, b) => ranges[a].max - ranges[b].max);
+      return { left: sortedByMax[sortedByMax.length - 1], right: sortedByMax[0], ranges };
+    }
+
+    return { left: keys[0], right: null, ranges };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartData, [...active].join(',')]);
+
   if (sorted.length < 2) {
     return (
       <div className="px-4 py-6 text-center text-muted text-sm font-body">
@@ -38,65 +113,6 @@ export default function HistoryChart({ days, weightUnit }) {
       </div>
     );
   }
-
-  const padding = { top: 20, right: 16, bottom: 32, left: 48 };
-  const width = 600;
-  const height = 200;
-  const chartW = width - padding.left - padding.right;
-  const chartH = height - padding.top - padding.bottom;
-
-  const activeMetrics = metrics.filter(m => active.has(m.key));
-
-  // Compute scales per metric (each gets its own Y axis range)
-  const scales = useMemo(() => {
-    const s = {};
-    for (const m of metrics) {
-      if (!active.has(m.key)) continue;
-      const values = sorted.map(d => getValue(d, m.key)).filter(v => v != null);
-      if (values.length === 0) continue;
-      let min = Math.min(...values);
-      let max = Math.max(...values);
-      if (min === max) { min -= 1; max += 1; }
-      const range = max - min;
-      s[m.key] = { min: min - range * 0.1, max: max + range * 0.1 };
-    }
-    return s;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sorted, [...active].join(',')]);
-
-  const xStep = sorted.length > 1 ? chartW / (sorted.length - 1) : 0;
-
-  function getPoints(key) {
-    const scale = scales[key];
-    if (!scale) return [];
-    return sorted.map((d, i) => {
-      const val = getValue(d, key);
-      if (val == null) return null;
-      const x = padding.left + i * xStep;
-      const y = padding.top + chartH - ((val - scale.min) / (scale.max - scale.min)) * chartH;
-      return { x, y, val, date: d.date };
-    }).filter(Boolean);
-  }
-
-  // Date labels
-  const labelCount = Math.min(sorted.length, 6);
-  const labelStep = Math.max(1, Math.floor((sorted.length - 1) / (labelCount - 1)));
-  const dateLabels = [];
-  for (let i = 0; i < sorted.length; i += labelStep) {
-    dateLabels.push({ i, date: sorted[i].date });
-  }
-  if (dateLabels[dateLabels.length - 1]?.i !== sorted.length - 1) {
-    dateLabels.push({ i: sorted.length - 1, date: sorted[sorted.length - 1].date });
-  }
-
-  function formatShortDate(dateStr) {
-    const d = new Date(dateStr + 'T12:00:00');
-    return `${d.getMonth() + 1}/${d.getDate()}`;
-  }
-
-  // Show Y-axis labels for the single active metric, or for the first if multiple
-  const yAxisMetric = activeMetrics.length === 1 ? activeMetrics[0] : activeMetrics[0];
-  const yAxisScale = yAxisMetric ? scales[yAxisMetric.key] : null;
 
   return (
     <div className="px-4">
@@ -119,114 +135,63 @@ export default function HistoryChart({ days, weightUnit }) {
           ))}
         </div>
 
-        {/* SVG Chart */}
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full" preserveAspectRatio="xMidYMid meet">
-          {/* Grid lines */}
-          {[0, 0.25, 0.5, 0.75, 1].map(pct => {
-            const y = padding.top + chartH * (1 - pct);
-            return (
-              <line
-                key={pct}
-                x1={padding.left}
-                y1={y}
-                x2={padding.left + chartW}
-                y2={y}
-                stroke="#333333"
-                strokeWidth="0.5"
+        {/* Recharts Line Chart */}
+        <ResponsiveContainer width="100%" height={180}>
+          <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
+            <CartesianGrid stroke="#333333" strokeWidth={0.5} vertical={false} />
+            <XAxis
+              dataKey="date"
+              tickFormatter={formatShortDate}
+              tick={{ fill: '#6b6b6b', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}
+              axisLine={{ stroke: '#333333' }}
+              tickLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              yAxisId="left"
+              tick={{ fill: '#6b6b6b', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}
+              axisLine={false}
+              tickLine={false}
+              domain={['auto', 'auto']}
+              allowDecimals={false}
+            />
+            {yAxes.right && (
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tick={{ fill: '#6b6b6b', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}
+                axisLine={false}
+                tickLine={false}
+                domain={['auto', 'auto']}
+                allowDecimals={false}
               />
-            );
-          })}
+            )}
+            <Tooltip content={<CustomTooltip weightUnit={weightUnit} />} />
+            {activeMetrics.map(m => (
+              <Line
+                key={m.key}
+                type="monotone"
+                dataKey={m.key}
+                stroke={m.color}
+                strokeWidth={2}
+                dot={{ r: 3, fill: m.color, strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: m.color, strokeWidth: 0 }}
+                yAxisId={yAxes.right === m.key ? 'right' : 'left'}
+                connectNulls
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
 
-          {/* Y-axis labels — color-coded to first active metric */}
-          {yAxisScale && [0, 0.5, 1].map(pct => {
-            const val = yAxisScale.min + (yAxisScale.max - yAxisScale.min) * pct;
-            const y = padding.top + chartH * (1 - pct);
-            return (
-              <text
-                key={pct}
-                x={padding.left - 6}
-                y={y + 3}
-                textAnchor="end"
-                fill={activeMetrics.length > 1 ? yAxisMetric.color : '#6b6b6b'}
-                fontSize="10"
-                fontFamily="JetBrains Mono, monospace"
-              >
-                {Math.round(val)}
-              </text>
-            );
-          })}
-
-          {/* Date labels */}
-          {dateLabels.map(({ i, date }) => (
-            <text
-              key={i}
-              x={padding.left + i * xStep}
-              y={height - 4}
-              textAnchor="middle"
-              fill="#6b6b6b"
-              fontSize="9"
-              fontFamily="JetBrains Mono, monospace"
-            >
-              {formatShortDate(date)}
-            </text>
-          ))}
-
-          {/* Lines and dots */}
-          {activeMetrics.map(m => {
-            const points = getPoints(m.key);
-            if (points.length < 2) return null;
-            const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-            return (
-              <g key={m.key}>
-                <path
-                  d={pathD}
-                  fill="none"
-                  stroke={m.color}
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-                {points.map((p, i) => (
-                  <circle
-                    key={i}
-                    cx={p.x}
-                    cy={p.y}
-                    r="3"
-                    fill={m.color}
-                  />
-                ))}
-              </g>
-            );
-          })}
-        </svg>
-
-        {/* Legend with latest values and ranges */}
-        {activeMetrics.length > 0 && (
+        {/* Legend */}
+        {activeMetrics.length > 1 && (
           <div className="flex flex-wrap gap-3 mt-2 justify-center">
-            {activeMetrics.map(m => {
-              const scale = scales[m.key];
-              const points = getPoints(m.key);
-              const latest = points.length > 0 ? points[points.length - 1].val : null;
-              const unit = m.key === 'weight' ? weightUnit : m.unit;
-              return (
-                <div key={m.key} className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
-                  <span className="text-[10px] font-mono" style={{ color: m.color }}>
-                    {m.label}
-                    {latest != null && (
-                      <span className="text-muted">
-                        {' '}{Math.round(latest)}{unit ? ` ${unit}` : ''}
-                      </span>
-                    )}
-                    {scale && activeMetrics.length > 1 && (
-                      <span className="text-muted">
-                        {' '}({Math.round(scale.min + (scale.max - scale.min) * 0.05)}–{Math.round(scale.max - (scale.max - scale.min) * 0.05)})
-                      </span>
-                    )}
-                  </span>
-                </div>
-              );
-            })}
+            {activeMetrics.map(m => (
+              <div key={m.key} className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
+                <span className="text-[10px] font-mono text-muted">{m.label}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>
