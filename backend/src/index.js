@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import entriesRoutes from './routes/entries.js';
 import weightRoutes from './routes/weight.js';
 import historyRoutes from './routes/history.js';
+import foodSearchRoutes from './routes/food-search.js';
 import { authenticate } from './middleware/auth.js';
 
 const app = express();
@@ -22,6 +23,7 @@ app.use('/api', authRoutes);
 app.use('/api', authenticate, entriesRoutes);
 app.use('/api', authenticate, weightRoutes);
 app.use('/api', authenticate, historyRoutes);
+app.use('/api', authenticate, foodSearchRoutes);
 
 app.listen(PORT, () => {
   console.log(`Liminal Gains API running on port ${PORT}`);
