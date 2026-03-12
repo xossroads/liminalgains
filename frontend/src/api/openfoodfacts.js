@@ -3,9 +3,6 @@ import axios from 'axios';
 const off = axios.create({
   baseURL: 'https://world.openfoodfacts.org',
   timeout: 8000,
-  headers: {
-    'User-Agent': 'LiminalGains/1.0 (liminalgains.fit)',
-  },
 });
 
 export async function searchFoods(query, pageSize = 10) {
