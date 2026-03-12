@@ -23,6 +23,7 @@ router.get('/food-search', async (req, res) => {
         search_terms: q.trim(),
         json: true,
         page_size,
+        countries_tags_en: 'united-states',
         fields: 'product_name,brands,serving_quantity,serving_size,nutriments',
       },
     });
