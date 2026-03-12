@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import { startSync, stopSync } from './sync/syncManager';
 import { getSetting, putSetting } from './db/idb';
 import { getAuth, logout } from './api/client';
+import logo from './assets/logo.png';
 
 export default function App() {
   const [tab, setTab] = useState('today');
@@ -53,8 +54,9 @@ export default function App() {
     <div className="min-h-screen bg-surface-900">
       {/* Header - mobile */}
       <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-surface-600">
-        <div className="font-display font-bold text-base tracking-wide text-white">
-          LIMINAL GAINS
+        <div className="flex items-center gap-2">
+          <img src={logo} alt="LG" className="w-7 h-7 rounded" />
+          <span className="font-display font-bold text-base tracking-wide text-white">LIMINAL GAINS</span>
         </div>
         <SyncStatusIndicator />
       </header>
