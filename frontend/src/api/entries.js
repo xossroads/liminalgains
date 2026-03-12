@@ -19,3 +19,8 @@ export async function deleteEntryAPI(id) {
   const res = await client.delete(`/entries/${id}`);
   return res.data;
 }
+
+export async function fetchHistory() {
+  const res = await client.get('/history');
+  return res.data;
+}

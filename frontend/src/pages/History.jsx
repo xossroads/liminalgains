@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { getAllDatesWithData, getDaySummary } from '../db/idb';
+import { getAllDatesWithData, getDaySummary, replaceEntriesForDate, putWeight } from '../db/idb';
+import { fetchHistory } from '../api/entries';
 import HistoryChart from '../components/HistoryChart';
 
 export default function History({ weightUnit }) {
@@ -13,9 +14,42 @@ export default function History({ weightUnit }) {
   }, []);
 
   async function loadDays() {
+    // Load from local IndexedDB first (instant)
     const dates = await getAllDatesWithData();
     const summaries = await Promise.all(dates.map(getDaySummary));
     setDays(summaries);
+
+    // Background fetch from server to get latest data
+    try {
+      const serverDays = await fetchHistory();
+      if (serverDays && serverDays.length > 0) {
+        // Update IndexedDB with server data
+        for (const day of serverDays) {
+          // Update weight in IndexedDB
+          if (day.weight != null) {
+            await putWeight({
+              date: day.date,
+              weight_value: day.weight,
+              unit: day.unit || 'lbs',
+              syncStatus: 'synced',
+            });
+          }
+        }
+
+        // Use server summaries directly (they're already aggregated)
+        const merged = serverDays.map(d => ({
+          date: d.date,
+          totals: d.totals,
+          weight: d.weight,
+          unit: d.unit,
+          entryCount: d.entry_count,
+        }));
+        setDays(merged);
+      }
+    } catch (err) {
+      // Offline or error — local data is already displayed
+      console.warn('History server fetch failed:', err);
+    }
   }
 
   function formatDate(dateStr) {

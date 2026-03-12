@@ -50,7 +50,8 @@ export default function HistoryChart({ days, weightUnit }) {
   // Compute scales per metric (each gets its own Y axis range)
   const scales = useMemo(() => {
     const s = {};
-    for (const m of activeMetrics) {
+    for (const m of metrics) {
+      if (!active.has(m.key)) continue;
       const values = sorted.map(d => getValue(d, m.key)).filter(v => v != null);
       if (values.length === 0) continue;
       let min = Math.min(...values);
@@ -60,7 +61,8 @@ export default function HistoryChart({ days, weightUnit }) {
       s[m.key] = { min: min - range * 0.1, max: max + range * 0.1 };
     }
     return s;
-  }, [sorted, activeMetrics]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sorted, [...active].join(',')]);
 
   const xStep = sorted.length > 1 ? chartW / (sorted.length - 1) : 0;
 
@@ -91,6 +93,10 @@ export default function HistoryChart({ days, weightUnit }) {
     const d = new Date(dateStr + 'T12:00:00');
     return `${d.getMonth() + 1}/${d.getDate()}`;
   }
+
+  // Show Y-axis labels for the single active metric, or for the first if multiple
+  const yAxisMetric = activeMetrics.length === 1 ? activeMetrics[0] : activeMetrics[0];
+  const yAxisScale = yAxisMetric ? scales[yAxisMetric.key] : null;
 
   return (
     <div className="px-4">
@@ -131,27 +137,24 @@ export default function HistoryChart({ days, weightUnit }) {
             );
           })}
 
-          {/* Y-axis labels for first active metric */}
-          {activeMetrics.length > 0 && scales[activeMetrics[0].key] && (() => {
-            const scale = scales[activeMetrics[0].key];
-            return [0, 0.5, 1].map(pct => {
-              const val = scale.min + (scale.max - scale.min) * pct;
-              const y = padding.top + chartH * (1 - pct);
-              return (
-                <text
-                  key={pct}
-                  x={padding.left - 6}
-                  y={y + 3}
-                  textAnchor="end"
-                  fill="#6b6b6b"
-                  fontSize="10"
-                  fontFamily="JetBrains Mono, monospace"
-                >
-                  {Math.round(val)}
-                </text>
-              );
-            });
-          })()}
+          {/* Y-axis labels — color-coded to first active metric */}
+          {yAxisScale && [0, 0.5, 1].map(pct => {
+            const val = yAxisScale.min + (yAxisScale.max - yAxisScale.min) * pct;
+            const y = padding.top + chartH * (1 - pct);
+            return (
+              <text
+                key={pct}
+                x={padding.left - 6}
+                y={y + 3}
+                textAnchor="end"
+                fill={activeMetrics.length > 1 ? yAxisMetric.color : '#6b6b6b'}
+                fontSize="10"
+                fontFamily="JetBrains Mono, monospace"
+              >
+                {Math.round(val)}
+              </text>
+            );
+          })}
 
           {/* Date labels */}
           {dateLabels.map(({ i, date }) => (
@@ -197,15 +200,33 @@ export default function HistoryChart({ days, weightUnit }) {
           })}
         </svg>
 
-        {/* Legend for multiple active */}
-        {activeMetrics.length > 1 && (
+        {/* Legend with latest values and ranges */}
+        {activeMetrics.length > 0 && (
           <div className="flex flex-wrap gap-3 mt-2 justify-center">
-            {activeMetrics.map(m => (
-              <div key={m.key} className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
-                <span className="text-[10px] font-mono text-muted">{m.label}</span>
-              </div>
-            ))}
+            {activeMetrics.map(m => {
+              const scale = scales[m.key];
+              const points = getPoints(m.key);
+              const latest = points.length > 0 ? points[points.length - 1].val : null;
+              const unit = m.key === 'weight' ? weightUnit : m.unit;
+              return (
+                <div key={m.key} className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
+                  <span className="text-[10px] font-mono" style={{ color: m.color }}>
+                    {m.label}
+                    {latest != null && (
+                      <span className="text-muted">
+                        {' '}{Math.round(latest)}{unit ? ` ${unit}` : ''}
+                      </span>
+                    )}
+                    {scale && activeMetrics.length > 1 && (
+                      <span className="text-muted">
+                        {' '}({Math.round(scale.min + (scale.max - scale.min) * 0.05)}–{Math.round(scale.max - (scale.max - scale.min) * 0.05)})
+                      </span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
