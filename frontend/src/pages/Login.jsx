@@ -43,7 +43,7 @@ export default function Login({ onLogin }) {
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
               autoFocus
-              className="w-full bg-surface-700 border border-surface-500 rounded-lg px-3 py-3 text-white font-body text-sm outline-none focus:border-accent/50 min-h-[44px]"
+              className="w-full bg-surface-700 border border-surface-500 rounded-lg px-3 py-3 text-white font-body outline-none focus:border-accent/50 min-h-[44px]"
             />
           </div>
 
@@ -56,7 +56,7 @@ export default function Login({ onLogin }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
-              className="w-full bg-surface-700 border border-surface-500 rounded-lg px-3 py-3 text-white font-body text-sm outline-none focus:border-accent/50 min-h-[44px]"
+              className="w-full bg-surface-700 border border-surface-500 rounded-lg px-3 py-3 text-white font-body outline-none focus:border-accent/50 min-h-[44px]"
             />
           </div>
 
