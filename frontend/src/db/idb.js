@@ -84,6 +84,11 @@ export async function putWeight(record) {
   await db.put('daily_weight', record);
 }
 
+export async function removeWeight(date) {
+  const db = await getDB();
+  await db.delete('daily_weight', date);
+}
+
 export async function getPendingWeights() {
   const db = await getDB();
   const all = await db.getAll('daily_weight');

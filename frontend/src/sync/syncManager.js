@@ -1,7 +1,7 @@
 import { checkHealth } from '../api/client';
 import { createEntry, updateEntryAPI, deleteEntryAPI } from '../api/entries';
-import { updateWeight } from '../api/weight';
-import { getPendingEntries, putEntry, removeEntry, getPendingWeights, putWeight } from '../db/idb';
+import { updateWeight, deleteWeight } from '../api/weight';
+import { getPendingEntries, putEntry, removeEntry, getPendingWeights, putWeight, removeWeight } from '../db/idb';
 
 let listeners = new Set();
 let currentStatus = { status: 'synced', pendingCount: 0 };
@@ -86,9 +86,14 @@ export async function sync() {
   // Sync weights
   for (const w of pendingWeights) {
     try {
-      await updateWeight(w.date, w.weight_value, w.unit);
-      w.syncStatus = 'synced';
-      await putWeight(w);
+      if (w.syncStatus === 'pending_delete') {
+        await deleteWeight(w.date);
+        await removeWeight(w.date);
+      } else {
+        await updateWeight(w.date, w.weight_value, w.unit);
+        w.syncStatus = 'synced';
+        await putWeight(w);
+      }
     } catch (err) {
       console.warn('Sync weight failed:', w.date, err);
     }

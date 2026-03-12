@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { getAllDatesWithData, getDaySummary } from '../db/idb';
+import { getAllDatesWithData, getDaySummary, replaceEntriesForDate, putWeight } from '../db/idb';
+import { fetchHistory } from '../api/entries';
+import HistoryChart from '../components/HistoryChart';
 
 export default function History({ weightUnit }) {
   const [days, setDays] = useState([]);
@@ -12,9 +14,42 @@ export default function History({ weightUnit }) {
   }, []);
 
   async function loadDays() {
+    // Load from local IndexedDB first (instant)
     const dates = await getAllDatesWithData();
     const summaries = await Promise.all(dates.map(getDaySummary));
     setDays(summaries);
+
+    // Background fetch from server to get latest data
+    try {
+      const serverDays = await fetchHistory();
+      if (serverDays && serverDays.length > 0) {
+        // Update IndexedDB with server data
+        for (const day of serverDays) {
+          // Update weight in IndexedDB
+          if (day.weight != null) {
+            await putWeight({
+              date: day.date,
+              weight_value: day.weight,
+              unit: day.unit || 'lbs',
+              syncStatus: 'synced',
+            });
+          }
+        }
+
+        // Use server summaries directly (they're already aggregated)
+        const merged = serverDays.map(d => ({
+          date: d.date,
+          totals: d.totals,
+          weight: d.weight,
+          unit: d.unit,
+          entryCount: d.entry_count,
+        }));
+        setDays(merged);
+      }
+    } catch (err) {
+      // Offline or error — local data is already displayed
+      console.warn('History server fetch failed:', err);
+    }
   }
 
   function formatDate(dateStr) {
@@ -46,6 +81,15 @@ export default function History({ weightUnit }) {
       <div className="px-4 py-4">
         <h1 className="text-base font-display font-medium text-white">History</h1>
       </div>
+
+      <div className="py-3">
+        <HistoryChart days={days} weightUnit={weightUnit} />
+      </div>
+
+      <div className="px-4 py-2">
+        <h2 className="text-xs text-muted uppercase tracking-wider font-display">Daily Log</h2>
+      </div>
+
       <div className="space-y-1">
         {days.map((day) => (
           <div key={day.date}>
