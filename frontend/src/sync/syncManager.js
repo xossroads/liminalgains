@@ -1,5 +1,5 @@
 import { checkHealth } from '../api/client';
-import { createEntry, deleteEntryAPI } from '../api/entries';
+import { createEntry, updateEntryAPI, deleteEntryAPI } from '../api/entries';
 import { updateWeight } from '../api/weight';
 import { getPendingEntries, putEntry, removeEntry, getPendingWeights, putWeight } from '../db/idb';
 
@@ -59,6 +59,19 @@ export async function sync() {
         entry.serverId = serverEntry.id;
         entry.syncStatus = 'synced';
         await putEntry(entry);
+      } else if (entry.syncStatus === 'pending_update') {
+        if (entry.serverId) {
+          await updateEntryAPI(entry.serverId, {
+            food_name: entry.food_name,
+            calories: entry.calories,
+            protein: entry.protein,
+            carbs: entry.carbs,
+            fiber: entry.fiber,
+            fat: entry.fat,
+          });
+          entry.syncStatus = 'synced';
+          await putEntry(entry);
+        }
       } else if (entry.syncStatus === 'pending_delete') {
         if (entry.serverId) {
           await deleteEntryAPI(entry.serverId);

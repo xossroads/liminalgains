@@ -1,4 +1,5 @@
 import { CalendarDays, Clock, Settings } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 const tabs = [
   { id: 'today', label: 'Today', icon: CalendarDays },
@@ -29,7 +30,8 @@ export default function BottomNav({ active, onChange }) {
 
       {/* Desktop sidebar */}
       <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-56 bg-surface-800 border-r border-surface-600 flex-col z-30">
-        <div className="p-5 border-b border-surface-600">
+        <div className="p-5 border-b border-surface-600 flex items-center gap-3">
+          <img src={logo} alt="LG" className="w-8 h-8 rounded" />
           <div className="font-display font-bold text-lg tracking-wide text-white">LIMINAL GAINS</div>
         </div>
         <div className="flex-1 py-4">
